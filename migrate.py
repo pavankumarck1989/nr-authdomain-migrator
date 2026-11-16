@@ -150,9 +150,13 @@ class Manifest:
         self.f.write(json.dumps(event) + "\n")
         self.f.flush()
 
+    def close(self):
+        self.f.close()
+
 
 def load_manifest(path):
-    events = [json.loads(line) for line in open(path) if line.strip()]
+    with open(path) as f:
+        events = [json.loads(line) for line in f if line.strip()]
     undone = {e["undone"] for e in events if "undone" in e}
     gone = {e["undone_user"] for e in events if "undone_user" in e}  # users already removed individually
     domain = next(e["domain"] for e in events if e.get("op") == "start")
@@ -537,6 +541,9 @@ def rollback(client, domain_id, manifest_path, execute, max_consecutive_failures
     except AbortRun as ex:
         LOG.error("%s", ex)
         stats["aborted"] = True
+    finally:
+        if done:
+            done.close()
     return stats, fails.items
 
 
@@ -583,6 +590,9 @@ def rollback_users(client, domain_id, manifest_path, emails, execute, max_consec
     except AbortRun as ex:
         LOG.error("%s", ex)
         stats["aborted"] = True
+    finally:
+        if done:
+            done.close()
     return stats, fails.items, skipped
 
 
@@ -825,6 +835,9 @@ def run(a, client):
                 if a.execute:
                     refresh_worksheet(client, a.domain, a.inp, csv_path, errors)
                 raise
+            finally:
+                if manifest:
+                    manifest.close()
             say(("EXECUTED" if a.execute else "DRY RUN (nothing written)") + f": {stats}")
             if not a.execute:
                 say("Estimated size: " + estimate(stats))

@@ -63,10 +63,12 @@ class Client:
                 if retryable and attempt < self.retries:
                     wait = self._backoff(attempt, e.headers.get("Retry-After") if e.headers else None)
                     LOG.warning("%s HTTP %s, retrying in %.0fs (attempt %d)", label, e.code, wait, attempt + 1)
+                    e.close()
                     time.sleep(wait)
                     continue
                 unsure = f" ({OUTCOME_UNKNOWN}; check the target before re-running)" if is_write and e.code >= 500 else ""
-                raise NerdGraphError(f"HTTP {e.code}: {e.read().decode(errors='replace')[:500]}{unsure}")
+                with e:
+                    raise NerdGraphError(f"HTTP {e.code}: {e.read().decode(errors='replace')[:500]}{unsure}")
             except OSError as e:  # URLError, timeouts, resets
                 if not is_write and attempt < self.retries:
                     wait = self._backoff(attempt)

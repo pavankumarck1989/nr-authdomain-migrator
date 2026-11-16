@@ -355,7 +355,8 @@ class W(unittest.TestCase):
     def test_invalid_choice_reported(self):
         import tempfile, userlist
         path = os.path.join(tempfile.mkdtemp(), "u.csv")
-        open(path, "w").write("email,migrate\na@x.com,Yes\nb@x.com,maybe\n")
+        with open(path, "w") as f:
+            f.write("email,migrate\na@x.com,Yes\nb@x.com,maybe\n")
         choices, errors = userlist.read_choices(path)
         self.assertEqual(choices, {"a@x.com": "yes"})
         self.assertEqual(len(errors), 1)
