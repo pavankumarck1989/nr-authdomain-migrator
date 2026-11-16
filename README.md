@@ -10,7 +10,7 @@ Copy users, groups, group membership and role grants from one New Relic authenti
 
 ## Requirements
 
-- Python 3.9 or newer.
+- Python 3.14 or newer.
 - Two authentication domains in the same organization: the current one (source) and the new one (target).
 - A **User API key** that can manage users, groups and access grants in both domains (for example Authentication Domain Manager and Organization Manager).
 
